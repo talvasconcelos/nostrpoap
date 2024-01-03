@@ -1,34 +1,46 @@
-# Models for retrieving data from the database
-# Includes some classmethods where we can add some logic to the data
-
-from sqlite3 import Row
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel
-from fastapi import Request
 
-from lnbits.lnurl import encode as lnurl_encode
-from urllib.parse import urlparse
 
-class CreateTempData(BaseModel):
-    wallet: Optional[str]
-    name: Optional[str]
-    total: Optional[int]
-    lnurlpayamount: Optional[int]
-    lnurlwithdrawamount: Optional[int]
+class CreateIssuer(BaseModel):
+    private_key: str
+    public_key: str
+    meta: str = "{}"
 
-class Temp(BaseModel):
+
+class Issuer(BaseModel):
     id: str
-    wallet: str
+    private_key: str
+    public_key: str
+    meta: str
+
+
+class CreatePOAP(BaseModel):
+    issuer_id: str
     name: str
-    total: Optional[int]
-    lnurlpayamount: Optional[int]
-    lnurlwithdrawamount: Optional[int]
-    lnurlpay: str
-    lnurlwithdraw: str
+    description: Optional[str]
+    image: str
+    thumbs: Optional[str]
 
-    @classmethod
-    def from_row(cls, row: Row) -> "Temp":
-        return cls(**dict(row))
 
-class CreateUpdateTempData(BaseModel):
-    items: List[Temp]
+class POAP(BaseModel):
+    id: str
+    issuer_id: str
+    name: str
+    description: Optional[str]
+    image: str
+    thumbs: str
+
+
+class CreateAward(BaseModel):
+    poap_id: str
+    issuer: str
+    claim_pubkey: str
+
+
+class Award(BaseModel):
+    id: str
+    poap_id: str
+    issuer: str
+    claim_pubkey: str
+    time: str
