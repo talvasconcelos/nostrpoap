@@ -10,13 +10,13 @@ class CreateIssuer(BaseModel):
 
 class Issuer(BaseModel):
     id: str
+    user_id: str
     private_key: str
     public_key: str
     meta: str
 
 
 class CreatePOAP(BaseModel):
-    issuer_id: str
     name: str
     description: Optional[str]
     image: str
@@ -33,14 +33,14 @@ class POAP(BaseModel):
 
 
 class CreateAward(BaseModel):
-    poap_id: str
+    badge_id: str
     issuer: str
     claim_pubkey: str
 
 
 class Award(BaseModel):
     id: str
-    poap_id: str
+    badge_id: str
     issuer: str
     claim_pubkey: str
     time: str

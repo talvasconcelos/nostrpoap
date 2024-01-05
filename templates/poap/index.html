@@ -2,15 +2,23 @@
 %} {% block page %}
 <div class="row q-col-gutter-md">
   <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
-    <q-card>
+    <q-card v-if="issuer && issuer.id">
       <q-card-section>
         <q-btn unelevated color="primary" @click="formDialog.show = true"
           >New Temp</q-btn
         >
     </q-card-section>
     </q-card>
+    <q-card v-else>
+      <q-card-section>
+        <span class="text-h4">Welcome to Nostr Market!</span><br />
+        In Nostr Market, merchant and customer communicate via NOSTR relays, so
+        loss of money, product information, and reputation become far less
+        likely if attacked.
+      </q-card-section>
+    </q-card>
 
-    <q-card>
+    <!-- <q-card>
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
@@ -85,7 +93,7 @@
 
         </q-table>
       </q-card-section>
-    </q-card>
+    </q-card> -->
   </div>
 
   <div class="col-12 col-md-4 col-lg-5 q-gutter-y-md">
@@ -202,6 +210,7 @@
     delimiters: ['${', '}'],
     data: function () {
       return {
+        issuer: {},
         poaps: [],
         poapsTable: {
           columns: [

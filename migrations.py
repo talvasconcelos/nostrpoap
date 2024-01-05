@@ -6,6 +6,7 @@ async def m001_initial(db):
         """
         CREATE TABLE poap.issuers (
             id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
             private_key TEXT NOT NULL,
             public_key TEXT NOT NULL,
             meta TEXT NOT NULL DEFAULT '{}'
@@ -14,11 +15,11 @@ async def m001_initial(db):
     )
 
     """
-    Initial POAPs table.
+    Initial POAP badges table.
     """
     await db.execute(
         """
-        CREATE TABLE poap.poaps (
+        CREATE TABLE poap.badges (
             id TEXT PRIMARY KEY,
             issuer_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -36,11 +37,11 @@ async def m001_initial(db):
         f"""
         CREATE TABLE poap.awards (
             id TEXT PRIMARY KEY,
-            poap_id TEXT NOT NULL,
+            badge_id TEXT NOT NULL,
             issuer TEXT NOT NULL,
             claim_pubkey TEXT NOT NULL,
             time TIMESTAMP NOT NULL DEFAULT {db.timestamp_now},
-            FOREIGN KEY (poap_id) REFERENCES poaps (id),
+            FOREIGN KEY (badge_id) REFERENCES poaps (id),
             FOREIGN KEY (issuer) REFERENCES issuers (id)
         );
         """
