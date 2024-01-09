@@ -64,6 +64,8 @@ async def get_poap(badge_id: str) -> Optional[POAP]:
     return POAP(**row) if row else None
 
 
-async def get_poaps(issuer_id) -> List[POAP]:
-    rows = await db.fetchall(f"SELECT * FROM poap.badges WHERE issuer_id = {issuer_id}")
+async def get_poaps(issuer_id: str) -> List[POAP]:
+    rows = await db.fetchall(
+        "SELECT * FROM poap.badges WHERE issuer_id = ?", (issuer_id,)
+    )
     return [POAP(**row) for row in rows]

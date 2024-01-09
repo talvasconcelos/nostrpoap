@@ -25,7 +25,7 @@ async def m001_initial(db):
             name TEXT NOT NULL,
             description TEXT,
             image TEXT NOT NULL,
-            thumbs TEXT NOT NULL DEFAULT '[]',
+            thumbs TEXT NOT NULL DEFAULT '[]'
         );
         """
     )

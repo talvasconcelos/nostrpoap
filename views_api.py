@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Optional
 
 from fastapi import Depends, Request
 from loguru import logger
@@ -55,6 +56,24 @@ async def api_create_issuer(
         )
 
 
+@poap_ext.get("/api/v1/issuer")
+async def api_get_issuer(
+    wallet: WalletTypeInfo = Depends(require_invoice_key),
+) -> Optional[Issuer]:
+    try:
+        issuer = await get_issuer_for_user(wallet.wallet.user)
+        if not issuer:
+            return
+
+        return issuer
+    except Exception as ex:
+        logger.warning(ex)
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Cannot get issuer",
+        )
+
+
 ## Create a new badge
 
 
@@ -79,6 +98,10 @@ async def api_poaps(
     wallet: WalletTypeInfo = Depends(require_invoice_key),
 ):
     issuer = await get_issuer_for_user(wallet.wallet.user)
+    if not issuer:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Issuer does not exist."
+        )
     return [poap.dict() for poap in await get_poaps(issuer.id)]
 
 
@@ -105,7 +128,7 @@ async def api_poap_update(
 async def api_poap_award(
     poap_id: str,
     pubkey: str,
-    request: Request = Depends(),
+    request: Request,
 ):
     if not poap_id:
         raise HTTPException(

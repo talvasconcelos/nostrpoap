@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import Depends, Request
-from fastapi.poaplating import Jinja2Templates
+from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
 from starlette.responses import HTMLResponse
 

@@ -8,7 +8,7 @@ from lnbits.tasks import catch_everything_and_restart
 
 db = Database("ext_poap")
 
-poap_ext: APIRouter = APIRouter(prefix="/poap", tags=["Temp"])
+poap_ext: APIRouter = APIRouter(prefix="/poap", tags=["POAP"])
 
 poap_static_files = [
     {
