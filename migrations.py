@@ -25,7 +25,9 @@ async def m001_initial(db):
             name TEXT NOT NULL,
             description TEXT,
             image TEXT NOT NULL,
-            thumbs TEXT NOT NULL DEFAULT '[]'
+            thumbs TEXT,
+            event_id TEXT,
+            event_created_at INT
         );
         """
     )
@@ -40,7 +42,8 @@ async def m001_initial(db):
             badge_id TEXT NOT NULL,
             issuer TEXT NOT NULL,
             claim_pubkey TEXT NOT NULL,
-            time TIMESTAMP NOT NULL DEFAULT {db.timestamp_now},
+            event_id TEXT,
+            event_created_at INT,
             FOREIGN KEY (badge_id) REFERENCES poaps (id),
             FOREIGN KEY (issuer) REFERENCES issuers (id)
         );

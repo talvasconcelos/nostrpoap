@@ -3,6 +3,7 @@ const issuer = async () => {
 
   await keyPair('static/components/key-pair/key-pair.html')
   await issuerDetails('static/components/issuer-details/issuer-details.html')
+  await poapList('static/components/poap-list/poap-list.html')
 
   const nostr = window.NostrTools
 
@@ -27,10 +28,10 @@ const issuer = async () => {
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
             {name: 'name', align: 'left', label: 'Name', field: 'name'},
             {
-              name: 'wallet',
+              name: 'image',
               align: 'left',
-              label: 'Wallet',
-              field: 'wallet'
+              label: 'Image',
+              field: 'image'
             }
           ],
           pagination: {
@@ -157,8 +158,7 @@ const issuer = async () => {
             '/poap/api/v1/poaps',
             this.g.user.wallets[0].inkey
           )
-          this.poaps = [...data]
-          console.log(this.poaps)
+          this.poaps = [...data].map(mapPoaps)
         } catch (error) {
           LNbits.utils.notifyApiError(error)
         }
@@ -178,29 +178,18 @@ const issuer = async () => {
           LNbits.utils.notifyApiError(error)
         }
       },
-
       exportCSV: function () {
         LNbits.utils.exportCSV(this.poapsTable.columns, this.poaps)
       },
-      openformDialog(id) {
-        const [poapId, itemId] = id.split(':')
-        const poap = _.findWhere(this.poaps, {id: poapId})
-        if (itemId) {
-          const item = poap.itemsMap.get(id)
-          this.formDialog.data = {
-            ...item,
-            poap: poapId
-          }
-        } else {
-          this.formDialog.data.poap = poapId
-        }
-        this.formDialog.data.currency = poap.currency
+      openFormDialog(id) {
+        const poap = this.poaps.find(p => p.id === id)
+        this.formDialog.data = poap
         this.formDialog.show = true
       }
     },
     async created() {
       await this.getIssuer()
-      if (this.g.user.wallets.length) {
+      if (this.issuer.id) {
         await this.getPoaps()
       }
     }
@@ -208,3 +197,9 @@ const issuer = async () => {
 }
 
 issuer()
+
+// pub: 38f0d5d4504ca0eef6b7435881e499371fb27ca7812cd9bff3e7ee6857a40480
+// sec: 8b9c563736267486f467572a297d19012f468c83713fabb70baa6458e45dc0cc
+
+// https://image.nostr.build/ae692f0d98c29e90dbea194608858f078e16d94b2d2bf90e85456e23026bc537.jpg
+// https://image.nostr.build/237bf04594f02e4a03d752b4f74adf587998cb5ed23acd7610c73c274acd93c9.jpg

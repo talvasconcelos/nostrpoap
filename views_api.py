@@ -18,12 +18,14 @@ from .crud import (
     get_issuer_by_pubkey,
     get_issuer_for_user,
     create_poap,
-    # update_poap,
+    update_poap,
     # delete_poap,
     get_poap,
     get_poaps,
 )
 from .models import CreateIssuer, Issuer, CreatePOAP
+from .services import sign_and_send_to_nostr, resubscribe_to_all_issuers
+from . import nostr_client
 
 
 @poap_ext.post("/api/v1/issuer")
@@ -41,6 +43,10 @@ async def api_create_issuer(
             raise AssertionError("An issuer already exists for this user")
 
         issuer = await create_issuer(wallet.wallet.user, data)
+
+        await resubscribe_to_all_issuers()
+
+        await nostr_client.issuer_temp_subscription(issuer.public_key)
 
         return issuer
     except AssertionError as ex:
@@ -81,13 +87,37 @@ async def api_get_issuer(
 async def api_poap_create(
     data: CreatePOAP, wallet: WalletTypeInfo = Depends(require_admin_key)
 ):
-    issuer = await get_issuer_for_user(wallet.wallet.user)
-    if not issuer:
+    try:
+        issuer = await get_issuer_for_user(wallet.wallet.user)
+        if not issuer:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="Issuer does not exist."
+            )
+
+        poap = await create_poap(issuer_id=issuer.id, data=data)
+        assert poap, "POAP couldn't be created"
+
+        event = await sign_and_send_to_nostr(issuer, poap)
+        assert event, "POAP couldn't be uploaded to Nostr"
+        logger.debug(f"POAP uploaded to Nostr: {event}")
+
+        poap.event_id = event.id
+        poap.event_created_at = event.created_at
+
+        await update_poap(badge_id=poap.id, data=poap)
+        return poap.dict()
+
+    except (ValueError, AssertionError) as ex:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Issuer does not exist."
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=str(ex),
         )
-    poap = await create_poap(issuer_id=issuer.id, data=data)
-    return poap.dict()
+    except Exception as ex:
+        logger.warning(ex)
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Cannot create badge",
+        )
 
 
 ## Get all poaps belonging to the user
@@ -152,32 +182,3 @@ async def api_poap_award(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="Missing claim_pubkey"
         )
-
-
-# @poap_ext.post("/api/v1/poaps", status_code=HTTPStatus.CREATED)
-# async def api_poap_create(
-#     data: CreateTempData, wallet: WalletTypeInfo = Depends(get_key_type)
-# ):
-#     poap = await create_poap(wallet_id=wallet.wallet.id, data=data)
-#     return poap.dict()
-
-
-## Delete a record
-
-
-# @poap_ext.delete("/api/v1/poaps/{poap_id}")
-# async def api_poap_delete(
-#     poap_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
-# ):
-#     poap = await get_poap(poap_id)
-
-#     if not poap:
-#         raise HTTPException(
-#             status_code=HTTPStatus.NOT_FOUND, detail="Temp does not exist."
-#         )
-
-#     if poap.wallet != wallet.wallet.id:
-#         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Not your Temp.")
-
-#     await delete_poap(poap_id)
-#     return "", HTTPStatus.NO_CONTENT

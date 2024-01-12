@@ -3,8 +3,10 @@ from lnbits.helpers import urlsafe_short_hash
 import uuid
 
 from . import db
-from .models import CreateIssuer, Issuer, POAP, CreatePOAP
+from .models import CreateIssuer, Issuer, POAP, CreatePOAP, CreateAward, Award
 from loguru import logger
+
+######################################## ISSUER ########################################
 
 
 async def get_issuer_by_pubkey(pubkey: str) -> Optional[Issuer]:
@@ -17,6 +19,14 @@ async def get_issuer_by_pubkey(pubkey: str) -> Optional[Issuer]:
 async def get_issuer_for_user(user_id: str) -> Optional[Issuer]:
     row = await db.fetchone("SELECT * FROM poap.issuers WHERE user_id = ?", (user_id,))
     return Issuer(**row) if row else None
+
+
+async def get_issuers_ids_with_pubkeys() -> List[str]:
+    rows = await db.fetchall(
+        """SELECT id, public_key FROM poap.issuers""",
+    )
+
+    return [(row[0], row[1]) for row in rows]
 
 
 async def create_issuer(user_id: str, data: CreateIssuer) -> Issuer:
@@ -38,12 +48,16 @@ async def get_issuer(issuer_id: str) -> Optional[Issuer]:
     return Issuer(**row) if row else None
 
 
+######################################## POAP ########################################
+
+
 async def create_poap(issuer_id: str, data: CreatePOAP) -> POAP:
-    badge_id = uuid.uuid4().hex
+    logger.debug(f"Creating poap for issuer {issuer_id}, data: {data}")
+    badge_id = data.id or uuid.uuid4().hex
     await db.execute(
         """
-        INSERT INTO poap.badges (id, issuer_id, name, description, image, thumbs)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO poap.badges (id, issuer_id, name, description, image, thumbs, event_id, event_created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             badge_id,
@@ -52,6 +66,8 @@ async def create_poap(issuer_id: str, data: CreatePOAP) -> POAP:
             data.description,
             data.image,
             data.thumbs,
+            data.event_id,
+            data.event_created_at,
         ),
     )
     poap = await get_poap(badge_id)
@@ -69,3 +85,80 @@ async def get_poaps(issuer_id: str) -> List[POAP]:
         "SELECT * FROM poap.badges WHERE issuer_id = ?", (issuer_id,)
     )
     return [POAP(**row) for row in rows]
+
+
+async def update_poap(badge_id: str, data: CreatePOAP) -> POAP:
+    await db.execute(
+        """
+        UPDATE poap.badges SET name = ?, description = ?, image = ?, thumbs = ?, event_id = ?, event_created_at = ?
+        WHERE id = ?
+        """,
+        (
+            data.name,
+            data.description,
+            data.image,
+            data.thumbs,
+            data.event_id,
+            data.event_created_at,
+            badge_id,
+        ),
+    )
+    return await get_poap(badge_id)
+
+
+async def get_last_poap_update_time() -> int:
+    row = await db.fetchone(
+        """
+            SELECT event_created_at FROM poap.badges 
+            ORDER BY event_created_at DESC LIMIT 1
+        """,
+        (),
+    )
+    return row[0] or 0 if row else 0
+
+
+######################################## AWARD ########################################
+
+
+async def create_award_poap(issuer_id: str, data: CreateAward) -> Award:
+    award_id = data.id or uuid.uuid4().hex
+    await db.execute(
+        """
+        INSERT INTO poap.awards (id, badge_id, issuer, claim_pubkey, event_id, event_created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            award_id,
+            data.badge_id,
+            issuer_id,
+            data.claim_pubkey,
+            data.event_id,
+            data.event_created_at,
+        ),
+    )
+    award = await get_award_poap(award_id)
+    assert award, "Newly created award couldn't be retrieved"
+    return award
+
+
+async def get_award_poap(award_id: str) -> Optional[Award]:
+    row = await db.fetchone("SELECT * FROM poap.awards WHERE id = ?", (award_id,))
+    return Award(**row) if row else None
+
+
+async def get_awards_poap(badge_id: str) -> List[Award]:
+    rows = await db.fetchall(
+        "SELECT * FROM poap.awards WHERE badge_id = ?", (badge_id,)
+    )
+    return [Award(**row) for row in rows]
+
+
+async def get_last_award_update_time() -> int:
+    row = await db.fetchone(
+        """
+            SELECT event_created_at FROM poap.awards 
+            ORDER BY event_created_at DESC LIMIT 1
+        """,
+        (),
+    )
+    return row[0] or 0 if row else 0
