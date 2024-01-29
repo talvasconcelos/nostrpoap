@@ -3,5 +3,5 @@
   "short_description": "Create POAPs for your events",
   "tile": "/poap/static/image/poap.png",
   "contributors": ["talvasconcelos"],
-  "min_lnbits_version": "0.11.3"
+  "min_lnbits_version": "0.12.0"
 }

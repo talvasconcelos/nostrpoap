@@ -4,16 +4,9 @@ const issuer = async () => {
   await keyPair('static/components/key-pair/key-pair.html')
   await issuerDetails('static/components/issuer-details/issuer-details.html')
   await poapList('static/components/poap-list/poap-list.html')
+  await awardsTable('static/components/awards-table/awards-table.html')
 
   const nostr = window.NostrTools
-
-  const mapAwards = obj => {
-    obj.date = Quasar.utils.date.formatDate(
-      new Date(obj.time * 1000),
-      'YYYY-MM-DD HH:mm'
-    )
-    return obj
-  }
 
   new Vue({
     el: '#vue',
@@ -23,6 +16,7 @@ const issuer = async () => {
       return {
         issuer: {},
         poaps: [],
+        awards: [],
         poapsTable: {
           columns: [
             {name: 'id', align: 'left', label: 'ID', field: 'id'},
@@ -164,6 +158,9 @@ const issuer = async () => {
         }
       },
       async createPoap() {
+        if (this.formDialog.data.id) {
+          return this.updatePoap()
+        }
         try {
           const data = this.formDialog.data
           const {poap} = await LNbits.api.request(
@@ -178,6 +175,21 @@ const issuer = async () => {
           LNbits.utils.notifyApiError(error)
         }
       },
+      async updatePoap() {
+        try {
+          const data = this.formDialog.data
+          const {poap} = await LNbits.api.request(
+            'PUT',
+            `/poap/api/v1/poaps/${data.id}`,
+            this.g.user.wallets[0].adminkey,
+            data
+          )
+          this.poaps = this.poaps.map(p => (p.id === poap.id ? poap : p))
+          this.closeFormDialog()
+        } catch (error) {
+          LNbits.utils.notifyApiError(error)
+        }
+      },
       exportCSV: function () {
         LNbits.utils.exportCSV(this.poapsTable.columns, this.poaps)
       },
@@ -185,21 +197,34 @@ const issuer = async () => {
         const poap = this.poaps.find(p => p.id === id)
         this.formDialog.data = poap
         this.formDialog.show = true
+      },
+      openUrlDialog(id) {
+        const poap = this.poaps.find(p => p.id === id)
+        this.urlDialog.data = poap
+        this.urlDialog.show = true
+      },
+      // AWARDS / CLAIMS
+      async getAwards() {
+        try {
+          const {data} = await LNbits.api.request(
+            'GET',
+            '/poap/api/v1/awards',
+            this.g.user.wallets[0].inkey
+          )
+          this.awards = [...data]
+        } catch (error) {
+          LNbits.utils.notifyApiError(error)
+        }
       }
     },
     async created() {
       await this.getIssuer()
       if (this.issuer.id) {
         await this.getPoaps()
+        await this.getAwards()
       }
     }
   })
 }
 
 issuer()
-
-// pub: 38f0d5d4504ca0eef6b7435881e499371fb27ca7812cd9bff3e7ee6857a40480
-// sec: 8b9c563736267486f467572a297d19012f468c83713fabb70baa6458e45dc0cc
-
-// https://image.nostr.build/ae692f0d98c29e90dbea194608858f078e16d94b2d2bf90e85456e23026bc537.jpg
-// https://image.nostr.build/237bf04594f02e4a03d752b4f74adf587998cb5ed23acd7610c73c274acd93c9.jpg

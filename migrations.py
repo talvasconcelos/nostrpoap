@@ -44,7 +44,7 @@ async def m001_initial(db):
             claim_pubkey TEXT NOT NULL,
             event_id TEXT,
             event_created_at INT,
-            FOREIGN KEY (badge_id) REFERENCES poaps (id),
+            FOREIGN KEY (badge_id) REFERENCES badges (id),
             FOREIGN KEY (issuer) REFERENCES issuers (id)
         );
         """

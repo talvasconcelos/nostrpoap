@@ -10,7 +10,7 @@ from lnbits.decorators import check_user_exists
 from lnbits.settings import settings
 
 from . import poap_ext, poap_renderer
-from .crud import get_poap
+from .crud import get_poap, get_awards_poap
 
 poaps = Jinja2Templates(directory="poaps")
 
@@ -28,20 +28,20 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
 # Frontend shareable page
 
 
-@poap_ext.get("/{poap_id}")
+@poap_ext.get("/badge/{poap_id}")
 async def poap(request: Request, poap_id):
     poap = await get_poap(poap_id)
     if not poap:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Temp does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="Poap does not exist."
         )
+    awards = await get_awards_poap(poap.id)
     return poap_renderer().TemplateResponse(
         "poap/poap.html",
         {
             "request": request,
-            "poap_id": poap_id,
-            "lnurlpay": poap.lnurlpayamount,
-            "lnurlwithdraw": poap.lnurlwithdrawamount,
+            "poap": poap.dict(),
+            "awards": [award.dict() for award in awards],
             "web_manifest": f"/poap/manifest/{poap_id}.webmanifest",
         },
     )

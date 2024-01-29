@@ -33,19 +33,28 @@ async function poapList(path) {
       }
     },
     methods: {
-      openPoapExternal(id) {
+      naddrEncode(id) {
         const naddr = nostr.nip19.naddrEncode({
           pubkey: this.pubkey,
           kind: 30009,
           identifier: id,
           relays: []
         })
+        return naddr
+      },
+      openPoapExternal(id) {
+        const naddr = this.naddrEncode(id)
         window.open(`https://badges.page/a/${naddr}`, '_blank')
       },
       editPoap(poap) {
         this.$emit('edit-poap', poap)
+      },
+      shareUrl(id) {
+        this.$emit('open-url', id)
       }
     },
-    created() {}
+    created() {
+      console.log(this.poaps)
+    }
   })
 }

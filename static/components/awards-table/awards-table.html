@@ -1,0 +1,66 @@
+<q-card>
+  <q-card-section>
+    <div class="row items-center no-wrap q-mb-md">
+      <div class="col">
+        <h5 class="text-subtitle1 q-my-none">
+          Claimed POAP's <span class="text-caption">(Awarded)</span>
+        </h5>
+      </div>
+      <div class="col-auto">
+        <q-btn flat color="grey" @click="exportCSV">Export to CSV</q-btn>
+      </div>
+    </div>
+    <q-table
+      flat
+      title="Treats"
+      :data="awards"
+      :columns="columns"
+      row-key="id"
+      :selected-rows-label="getSelectedString"
+      selection="multiple"
+      :selected.sync="selected"
+      :dense="$q.screen.lt.md"
+    >
+      <template v-slot:body-cell-pubkey="props">
+        <q-td :props="props" @click="copyText(props.value)">
+          <div>
+            {{ `${props.value.slice(0, 6)}...${props.value.slice(-6)}` }}
+            <q-tooltip>Click to copy</q-tooltip>
+          </div>
+        </q-td>
+      </template>
+    </q-table>
+  </q-card-section>
+  <q-card-section>
+    <div class="row items-center no-wrap q-mb-md">
+      <div class="col">
+        <h5 class="text-subtitle1 q-my-none">
+          Actions <span class="text-caption">(Premium)</span>
+        </h5>
+      </div>
+    </div>
+    <div>
+      <q-btn
+        flat
+        color="primary"
+        :disable="!selected.length"
+        @click="openBulkDialog"
+        >Zap</q-btn
+      >
+      <q-btn
+        flat
+        color="primary"
+        :disable="!selected.length"
+        @click="openBulkDialog"
+        >Award</q-btn
+      >
+      <q-btn
+        flat
+        color="primary"
+        :disable="!selected.length"
+        @click="openBulkDialog"
+        >Bulk Actions</q-btn
+      >
+    </div>
+  </q-card-section>
+</q-card>

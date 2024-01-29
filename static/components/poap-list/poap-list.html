@@ -16,6 +16,8 @@
           <span class="text-weight-medium" v-text="poap.description"></span>
         </q-item-label>
         <q-item-label caption lines="1">
+          <span>ID: {{poap.id}}</span>
+          <br />
           <i>
             Minted {{ poap.dateFrom }}<q-tooltip>{{ poap.date }}</q-tooltip></i
           >
@@ -40,7 +42,14 @@
             icon="edit"
             @click="editPoap(poap.id)"
           />
-          <q-btn class="gt-sm" flat dense round icon="delete" />
+          <q-btn
+            class="gt-sm"
+            flat
+            dense
+            round
+            icon="share"
+            @click="shareUrl(poap.id)"
+          />
         </div>
       </q-item-section>
     </q-item>
@@ -64,4 +73,5 @@
       <q-tooltip>Items per page</q-tooltip>
     </q-select>
   </div>
+  <q-dialog></q-dialog>
 </div>

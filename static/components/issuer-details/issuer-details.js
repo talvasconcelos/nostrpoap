@@ -13,16 +13,16 @@ async function issuerDetails(path) {
         this.$emit('show-keys', !this.showKeys)
       },
 
-      republishMerchantData: async function () {
+      republishIssuerData: async function () {
         try {
           await LNbits.api.request(
             'PUT',
-            `/nostrmarket/api/v1/merchant/${this.issuerId}/nostr`,
+            `/poap/api/v1/issuer/${this.issuerId}/nostr`,
             this.adminkey
           )
           this.$q.notify({
             type: 'positive',
-            message: 'Merchant data republished to Nostr',
+            message: 'Issuer data republished to Nostr',
             timeout: 5000
           })
         } catch (error) {
@@ -30,11 +30,11 @@ async function issuerDetails(path) {
           LNbits.utils.notifyApiError(error)
         }
       },
-      requeryMerchantData: async function () {
+      requeryIssuerData: async function () {
         try {
           await LNbits.api.request(
             'GET',
-            `/nostrmarket/api/v1/merchant/${this.issuerId}/nostr`,
+            `/poap/api/v1/merchant/${this.issuerId}/nostr`,
             this.adminkey
           )
           this.$q.notify({
@@ -47,25 +47,25 @@ async function issuerDetails(path) {
           LNbits.utils.notifyApiError(error)
         }
       },
-      deleteMerchantTables: function () {
+      deleteIssuerTables: function () {
         LNbits.utils
           .confirmDialog(
             `
-             Stalls, products and orders will be deleted also!
-             Are you sure you want to delete this merchant?
+             POAPs and awards will be deleted also!
+             Are you sure you want to delete this issuer?
             `
           )
           .onOk(async () => {
             try {
               await LNbits.api.request(
                 'DELETE',
-                '/nostrmarket/api/v1/merchant/' + this.issuerId,
+                '/poap/api/v1/issuer/' + this.issuerId,
                 this.adminkey
               )
               this.$emit('issuer-deleted', this.issuerId)
               this.$q.notify({
                 type: 'positive',
-                message: 'Merchant Deleted',
+                message: 'Issuer Deleted',
                 timeout: 5000
               })
             } catch (error) {

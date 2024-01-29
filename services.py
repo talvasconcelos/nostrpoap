@@ -1,6 +1,7 @@
 import asyncio
 import json
 from typing import List, Optional, Tuple
+from webbrowser import get
 
 from loguru import logger
 
@@ -14,12 +15,32 @@ from .crud import (
     get_issuer_by_pubkey,
     create_poap,
     create_award_poap,
+    get_poaps,
+    get_awards,
     get_last_award_update_time,
     get_last_poap_update_time,
+    update_poap,
+    update_award,
 )
 
 from .nostr.event import NostrEvent
 from .models import Nostrable, Issuer, POAP, CreateAward
+
+
+async def update_issuer_to_nostr(issuer: Issuer, delete_issuer=False) -> Issuer:
+    # update poaps
+    poaps = await get_poaps(issuer.id)
+    for poap in poaps:
+        event = await sign_and_send_to_nostr(issuer, poap)
+        poap.event_id = event.id
+        poap.event_created_at = event.created_at
+        await update_poap(issuer.id, poap)
+
+    if delete_issuer:
+        # merchant profile updates not supported yet
+        event = await sign_and_send_to_nostr(issuer, issuer, delete=True)
+
+    return issuer
 
 
 async def sign_and_send_to_nostr(
@@ -62,8 +83,8 @@ async def process_nostr_message(msg: str):
         if type.upper() == "EVENT":
             _, event = rest
             event = NostrEvent(**event)
-            if event.kind == 0:
-                # await _handle_customer_profile_update(event)
+            if event.kind == 30008:
+                # await _handle_user_profile_event(event)
                 pass
             elif event.kind == 30009:
                 await _handle_badge(event)
@@ -87,7 +108,7 @@ async def _handle_badge(event: NostrEvent):
 
         if not d[0] or not image[0]:
             return
-
+        logger.debug(f"Creating poap for issuer {issuer.id}, d: {d}, name: {name}")
         poap = POAP(
             id=d[0],
             issuer_id=issuer.id,
@@ -126,3 +147,11 @@ async def _handle_award(event: NostrEvent):
 
     except Exception as ex:
         logger.error(ex)
+
+
+# async def _handle_user_profile_event(event: NostrEvent):
+#     try:
+
+
+#     except Exception as ex:
+#         logger.error(ex)

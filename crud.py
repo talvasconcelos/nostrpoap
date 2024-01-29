@@ -48,6 +48,33 @@ async def get_issuer(issuer_id: str) -> Optional[Issuer]:
     return Issuer(**row) if row else None
 
 
+async def delete_issuer_poaps(issuer_id: str) -> None:
+    await db.execute(
+        """
+        DELETE FROM poap.badges WHERE issuer_id = ?
+        """,
+        (issuer_id,),
+    )
+
+
+async def delete_issuer_awards(issuer_id: str) -> None:
+    await db.execute(
+        """
+        DELETE FROM poap.awards WHERE issuer = ?
+        """,
+        (issuer_id,),
+    )
+
+
+async def delete_issuer(issuer_id: str) -> None:
+    await db.execute(
+        """
+        DELETE FROM poap.issuers WHERE id = ?
+        """,
+        (issuer_id,),
+    )
+
+
 ######################################## POAP ########################################
 
 
@@ -87,11 +114,11 @@ async def get_poaps(issuer_id: str) -> List[POAP]:
     return [POAP(**row) for row in rows]
 
 
-async def update_poap(badge_id: str, data: CreatePOAP) -> POAP:
+async def update_poap(issuer_id: str, data: POAP) -> Optional[POAP]:
     await db.execute(
         """
         UPDATE poap.badges SET name = ?, description = ?, image = ?, thumbs = ?, event_id = ?, event_created_at = ?
-        WHERE id = ?
+        WHERE issuer_id = ? AND id = ?
         """,
         (
             data.name,
@@ -100,10 +127,20 @@ async def update_poap(badge_id: str, data: CreatePOAP) -> POAP:
             data.thumbs,
             data.event_id,
             data.event_created_at,
-            badge_id,
+            issuer_id,
+            data.id,
         ),
     )
-    return await get_poap(badge_id)
+    return await get_poap(data.id)
+
+
+async def delete_poap(issuer_id: str, badge_id: str) -> None:
+    await db.execute(
+        """
+        DELETE FROM poap.badges WHERE issuer_id = ? AND id = ?
+        """,
+        (issuer_id, badge_id),
+    )
 
 
 async def get_last_poap_update_time() -> int:
@@ -141,6 +178,19 @@ async def create_award_poap(issuer_id: str, data: CreateAward) -> Award:
     return award
 
 
+async def check_awarded_to_pubkey(badge_id: str, pubkey: str):
+    # check if the badge as been awarded to pubkey
+    count = await db.fetchone(
+        "SELECT COUNT(1) FROM poap.awards WHERE badge_id = ? AND claim_pubkey = ?",
+        (
+            badge_id,
+            pubkey,
+        ),
+    )
+    exists = int(count[0])
+    return not exists
+
+
 async def get_award_poap(award_id: str) -> Optional[Award]:
     row = await db.fetchone("SELECT * FROM poap.awards WHERE id = ?", (award_id,))
     return Award(**row) if row else None
@@ -153,6 +203,11 @@ async def get_awards_poap(badge_id: str) -> List[Award]:
     return [Award(**row) for row in rows]
 
 
+async def get_awards(issuer: str) -> List[Award]:
+    rows = await db.fetchall("SELECT * FROM poap.awards WHERE issuer = ?", (issuer,))
+    return [Award(**row) for row in rows]
+
+
 async def get_last_award_update_time() -> int:
     row = await db.fetchone(
         """
@@ -162,3 +217,21 @@ async def get_last_award_update_time() -> int:
         (),
     )
     return row[0] or 0 if row else 0
+
+
+async def update_award(award_id: str, data: CreateAward) -> Award:
+    await db.execute(
+        """
+        UPDATE poap.awards SET badge_id = ?, issuer = ?, claim_pubkey = ?, event_id = ?, event_created_at = ?
+        WHERE id = ?
+        """,
+        (
+            data.badge_id,
+            data.issuer,
+            data.claim_pubkey,
+            data.event_id,
+            data.event_created_at,
+            award_id,
+        ),
+    )
+    return await get_award_poap(award_id)
