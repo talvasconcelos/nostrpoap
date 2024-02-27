@@ -46,32 +46,6 @@ class NostrClient:
 
         return ws
 
-    # async def connect_to_nostrclient_ws(self) -> WebSocketApp:
-    #     def on_error(_, error):
-    #         logger.warning(error)
-    #         self.send_req_queue.put_nowait(ValueError("Websocket error."))
-    #         self.recieve_event_queue.put_nowait(ValueError("Websocket error."))
-
-    #     def on_close(_, status_code, message):
-    #         logger.warning(f"Websocket closed: '{status_code}' '{message}'")
-    #         self.send_req_queue.put_nowait(ValueError("Websocket close."))
-    #         self.recieve_event_queue.put_nowait(ValueError("Websocket close."))
-
-    #     logger.debug(f"Subscribing to websockets for nostrclient extension")
-    #     ws = WebSocketApp(
-    #         f"ws://localhost:{settings.port}/nostrclient/api/v1/relay",
-    #         on_message=on_message,
-    #         on_open=on_open,
-    #         on_close=on_close,
-    #         on_error=on_error,
-    #     )
-
-    #     wst = Thread(target=ws.run_forever)
-    #     wst.daemon = True
-    #     wst.start()
-
-    #     return ws
-
     async def run_forever(self):
         self.running = True
         while self.running:
@@ -93,37 +67,6 @@ class NostrClient:
             raise value
         return value
 
-    # async def run_forever(self):
-    #     def on_open(_):
-    #         logger.info("Connected to 'nostrclient' websocket")
-
-    #     def on_message(_, message):
-    #         self.recieve_event_queue.put_nowait(message)
-
-    #     self._safe_ws_stop()
-    #     running = True
-
-    #     while running:
-    #         try:
-    #             req = None
-    #             if not self.ws:
-    #                 self.ws = await self.connect_to_nostrclient_ws(on_open, on_message)
-    #                 # be sure the connection is open
-    #                 await asyncio.sleep(3)
-    #             req = await self.send_req_queue.get()
-
-    #             if isinstance(req, ValueError):
-    #                 running = False
-    #                 logger.warning(str(req))
-    #             else:
-    #                 self.ws.send(json.dumps(req))
-    #         except Exception as ex:
-    #             logger.warning(ex)
-    #             if req:
-    #                 await self.send_req_queue.put(req)
-    #             self._safe_ws_stop()
-    #             await asyncio.sleep(5)
-
     async def publish_nostr_event(self, e: NostrEvent):
         await self.send_req_queue.put(["EVENT", e.dict()])
 
@@ -132,11 +75,13 @@ class NostrClient:
         public_keys: List[str],
         badge_time=0,
         award_time=0,
+        dm_time=0,
     ):
         badge_filters = self._filters_for_badge_events(public_keys, badge_time)
         award_filters = self._filters_for_award_events(public_keys, award_time)
+        dm_filters = self._filters_for_direct_messages(public_keys, dm_time)
 
-        merchant_filters = badge_filters + award_filters
+        merchant_filters = badge_filters + award_filters + dm_filters
 
         self.subscription_id = "poap-" + urlsafe_short_hash()[:32]
         await self.send_req_queue.put(["REQ", self.subscription_id] + merchant_filters)
@@ -148,8 +93,9 @@ class NostrClient:
     async def issuer_temp_subscription(self, pk, duration=10):
         badge_filters = self._filters_for_badge_events([pk], 0)
         award_filters = self._filters_for_award_events([pk], 0)
+        dm_filters = self._filters_for_direct_messages([pk], 0)
 
-        issuer_filters = badge_filters + award_filters
+        issuer_filters = badge_filters + award_filters + dm_filters
 
         subscription_id = "issuer-" + urlsafe_short_hash()[:32]
         logger.debug(
@@ -194,12 +140,12 @@ class NostrClient:
 
         return [award_filter]
 
-    # def _filters_for_user_profile(self, public_keys: List[str], since: int) -> List:
-    #     profile_filter = {"kinds": [0], "authors": public_keys}
-    #     if since and since != 0:
-    #         profile_filter["since"] = since
+    def _filters_for_direct_messages(self, public_keys: List[str], since: int) -> List:
+        in_messages_filter = {"kinds": [4], "#p": public_keys}
+        if since and since != 0:
+            in_messages_filter["since"] = since
 
-    #     return [profile_filter]
+        return [in_messages_filter]
 
     def _safe_ws_stop(self):
         if not self.ws:

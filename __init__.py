@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
-from lnbits.tasks import catch_everything_and_restart
+from lnbits.tasks import create_permanent_task
 
 db = Database("ext_poap")
 
@@ -46,9 +46,8 @@ def poap_start():
         await asyncio.sleep(15)
         await wait_for_nostr_events(nostr_client)
 
-    loop = asyncio.get_event_loop()
     # task1 may be needed in the future
     # task1 = loop.create_task(catch_everything_and_restart(wait_for_paid_invoices))
-    task2 = loop.create_task(catch_everything_and_restart(_subscribe_to_nostr_client))
-    task3 = loop.create_task(catch_everything_and_restart(_wait_for_nostr_events))
+    task2 = create_permanent_task(_subscribe_to_nostr_client)
+    task3 = create_permanent_task(_wait_for_nostr_events)
     scheduled_tasks.extend([task2, task3])

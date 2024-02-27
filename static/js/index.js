@@ -39,31 +39,9 @@ const issuer = async () => {
           }
         },
         showKeys: false,
-        endpoint: `/poap/api/v1/issuer`,
-        options: [
-          {
-            type: 'str',
-            description: 'A display name for the badge',
-            name: 'name'
-          },
-          {
-            type: 'str',
-            description: 'A small description for the badge',
-            name: 'description'
-          },
-          {
-            type: 'str',
-            description: 'Image URL for the badge',
-            name: 'image'
-          },
-          {
-            type: 'str',
-            description: 'Thumbnail URL for the badge',
-            name: 'thumbs'
-          }
-        ],
         formDialog: {
           show: false,
+          useLocation: false,
           data: {}
         },
         urlDialog: {
@@ -72,7 +50,17 @@ const issuer = async () => {
         }
       }
     },
-    computed: {},
+    computed: {
+      geohash() {
+        if (this.formDialog.data.lat && this.formDialog.data.long) {
+          this.formDialog.data.geohash = gh_encode(
+            this.formDialog.data.lat,
+            this.formDialog.data.long
+          )
+          return this.formDialog.data.geohash
+        }
+      }
+    },
     methods: {
       generateKeys: async function () {
         const privateKey = nostr.generatePrivateKey()
@@ -162,12 +150,12 @@ const issuer = async () => {
           return this.updatePoap()
         }
         try {
-          const data = this.formDialog.data
-          const {poap} = await LNbits.api.request(
+          const formData = this.formDialog.data
+          const {data: poap} = await LNbits.api.request(
             'POST',
             '/poap/api/v1/poaps',
             this.g.user.wallets[0].adminkey,
-            data
+            formData
           )
           this.poaps = [...this.poaps, poap]
           this.closeFormDialog()
@@ -177,16 +165,19 @@ const issuer = async () => {
       },
       async updatePoap() {
         try {
-          const data = this.formDialog.data
-          const {poap} = await LNbits.api.request(
+          const formData = this.formDialog.data
+          
+          const {data: poap} = await LNbits.api.request(
             'PUT',
-            `/poap/api/v1/poaps/${data.id}`,
+            `/poap/api/v1/poaps/${formData.id}`,
             this.g.user.wallets[0].adminkey,
-            data
+            formData
           )
+          
           this.poaps = this.poaps.map(p => (p.id === poap.id ? poap : p))
           this.closeFormDialog()
         } catch (error) {
+          console.error(error)
           LNbits.utils.notifyApiError(error)
         }
       },
@@ -197,10 +188,12 @@ const issuer = async () => {
         const poap = this.poaps.find(p => p.id === id)
         this.formDialog.data = poap
         this.formDialog.show = true
+        this.formDialog.useLocation = !!poap.geohash
       },
-      openUrlDialog(id) {
-        const poap = this.poaps.find(p => p.id === id)
-        this.urlDialog.data = poap
+      openUrlDialog(naddr) {
+        // const poap = this.poaps.find(p => p.id === id)
+        console.log(naddr)
+        this.urlDialog.data = naddr
         this.urlDialog.show = true
       },
       // AWARDS / CLAIMS
@@ -228,3 +221,9 @@ const issuer = async () => {
 }
 
 issuer()
+
+// pub: 38f0d5d4504ca0eef6b7435881e499371fb27ca7812cd9bff3e7ee6857a40480
+// sec: 8b9c563736267486f467572a297d19012f468c83713fabb70baa6458e45dc0cc
+
+// https://image.nostr.build/ae692f0d98c29e90dbea194608858f078e16d94b2d2bf90e85456e23026bc537.jpg
+// https://image.nostr.build/237bf04594f02e4a03d752b4f74adf587998cb5ed23acd7610c73c274acd93c9.jpg

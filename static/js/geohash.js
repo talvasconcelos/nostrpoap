@@ -1,70 +1,3 @@
-function loadTemplateAsync(path) {
-  const result = new Promise(resolve => {
-    const xhttp = new XMLHttpRequest()
-
-    xhttp.onreadystatechange = function () {
-      if (this.readyState == 4) {
-        if (this.status == 200) resolve(this.responseText)
-
-        if (this.status == 404) resolve(`<div>Page not found: ${path}</div>`)
-      }
-    }
-
-    xhttp.open('GET', path, true)
-    xhttp.send()
-  })
-
-  return result
-}
-
-function mapPoaps(obj) {
-  obj.date = Quasar.utils.date.formatDate(
-    new Date(obj.event_created_at * 1000),
-    'YYYY-MM-DD HH:mm'
-  )
-  obj.dateFrom = moment(obj.date).fromNow()
-  if (obj?.geohash) {
-    const [lat, long] = gh_decode(obj.geohash)
-    obj.lat = lat
-    obj.long = long
-  }
-  return obj
-}
-
-function satOrBtc(val, showUnit = true, showSats = false) {
-  const value = showSats
-    ? LNbits.utils.formatSat(val)
-    : val == 0
-    ? 0.0
-    : (val / 100000000).toFixed(8)
-  if (!showUnit) return value
-  return showSats ? value + ' sat' : value + ' BTC'
-}
-
-function isValidKey(key, prefix = 'n') {
-  try {
-    if (key && key.startsWith(prefix)) {
-      let {_, data} = NostrTools.nip19.decode(key)
-      key = data
-    }
-    return isValidKeyHex(key)
-  } catch (error) {
-    return false
-  }
-}
-
-function isValidKeyHex(key) {
-  return key?.toLowerCase()?.match(/^[0-9a-f]{64}$/)
-}
-
-function formatCurrency(value, currency) {
-  return new Intl.NumberFormat(window.LOCALE, {
-    style: 'currency',
-    currency: currency
-  }).format(value)
-}
-
-/////////////////////// Geohash ///////////////////////
 const base32 = '0123456789bcdefghjkmnpqrstuvwxyz'
 const decodeMap = {}
 for (let i = 0; i < base32.length; i++) {
@@ -104,7 +37,7 @@ function decodeExactly(geohash) {
 
   const lat = (latInterval[0] + latInterval[1]) / 2
   const lon = (lonInterval[0] + lonInterval[1]) / 2
-  return [lat, lon, latErr, lonErr]
+  return lat, lon, latErr, lonErr
 }
 
 function gh_decode(geohash) {
@@ -118,7 +51,7 @@ function gh_decode(geohash) {
     .toFixed(Math.max(1, Math.round(-Math.log10(lonErr))) - 1)
     .replace(/\.?0+$/, '')
 
-  return [parseFloat(lats), parseFloat(lons)]
+  return parseFloat(lats), parseFloat(lons)
 }
 
 function gh_encode(latitude, longitude, precision = 12) {

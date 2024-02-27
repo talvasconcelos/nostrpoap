@@ -67,7 +67,10 @@
   </q-dialog>
 </div>
 {% endblock %} {% block scripts %}
+<script src="{{ url_for('poap_static', path='js/nostr.bundle.js') }}"></script>
 <script>
+  const NostrTools = window.NostrTools
+
   Vue.component(VueQrcode.name, VueQrcode)
 
   new Vue({

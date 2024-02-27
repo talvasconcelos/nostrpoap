@@ -5,6 +5,8 @@ from .nostr.event import NostrEvent
 import json
 import time
 import secp256k1
+from enum import Enum
+from .helpers import get_shared_secret, decrypt_message
 
 ######################################## NOSTR ########################################
 
@@ -37,6 +39,10 @@ class Issuer(BaseModel):
         sig = privkey.schnorr_sign(hash, None, raw=True)
         return sig.hex()
 
+    def decrypt_message(self, encrypted_message: str, public_key: str) -> str:
+        encryption_key = get_shared_secret(self.private_key, public_key)
+        return decrypt_message(encrypted_message, encryption_key)
+
 
 class CreatePOAP(BaseModel):
     id: Optional[str]
@@ -46,6 +52,7 @@ class CreatePOAP(BaseModel):
     thumbs: Optional[str]
     event_id: Optional[str]
     event_created_at: Optional[int]
+    geohash: Optional[str]
 
 
 class POAP(CreatePOAP, Nostrable):
@@ -63,6 +70,8 @@ class POAP(CreatePOAP, Nostrable):
                 ["description", self.description],
                 ["image", self.image, "1024x1024"],
                 ["thumb", self.thumbs, "256x256"] if self.thumbs else [],
+                ["subject", f"poap:{'location' if self.geohash else ''}"],
+                ["alt", "Claim this POAP at https://poap.nostr.com"],
             ],
             content="",
         )
@@ -89,8 +98,9 @@ class Award(CreateAward, Nostrable):
             created_at=round(time.time()),
             kind=8,
             tags=[
-                ["a", f"30009:{self.badge_id}"],
+                ["a", f"30009:{public_key}:{self.badge_id}"],
                 ["p", self.claim_pubkey],
+                ["subject", "poap"],
             ],
             content="",
         )

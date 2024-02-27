@@ -50,7 +50,8 @@ async function poapList(path) {
         this.$emit('edit-poap', poap)
       },
       shareUrl(id) {
-        this.$emit('open-url', id)
+        const naddr = this.naddrEncode(id)
+        this.$emit('open-url', naddr)
       }
     },
     created() {

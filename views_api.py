@@ -38,6 +38,7 @@ from .services import (
     subscribe_to_all_issuers,
 )
 from . import nostr_client
+from .helpers import normalize_public_key
 
 
 @poap_ext.post("/api/v1/issuer")
@@ -254,7 +255,8 @@ async def api_poap_update(
 
         poap.event_id = event.id
         await update_poap(issuer_id=issuer.id, data=poap)
-        return poap
+        logger.debug(f"POAP uploaded to Nostr: {poap.dict()}")
+        return poap.dict()
 
     except (ValueError, AssertionError) as ex:
         raise HTTPException(
@@ -316,6 +318,7 @@ async def api_poap_award(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Public key not found."
         )
+    data.claim_pubkey = normalize_public_key(data.claim_pubkey)
     try:
         not_yet_awarded = await check_awarded_to_pubkey(
             data.badge_id, data.claim_pubkey

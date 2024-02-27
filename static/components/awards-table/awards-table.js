@@ -11,11 +11,12 @@ async function awardsTable(path) {
 
   Vue.component('awards-table', {
     name: 'awards-table',
-    props: ['awards'],
+    props: ['awarded'],
     template,
 
     data: function () {
       return {
+        awards: [],
         selected: [],
         columns: [
           {name: 'id', align: 'left', label: 'ID', field: 'id'},
@@ -63,7 +64,7 @@ async function awardsTable(path) {
       }
     },
     created() {
-      this.awards = this.awards.map(mapAwards).sort((a, b) => {
+      this.awards = this.awarded.map(mapAwards).sort((a, b) => {
         return b.event_created_at - a.event_created_at
       })
       console.log(this.awards)

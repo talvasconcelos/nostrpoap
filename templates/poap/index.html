@@ -120,7 +120,7 @@
     </q-card>
     <awards-table
       v-if="awards && awards.length > 0"
-      :awards="awards"
+      :awarded="awards"
       @copy-text="copyText"
     ></awards-table>
   </div>
@@ -148,6 +148,7 @@
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script src="{{ url_for('poap_static', path='js/nostr.bundle.js') }}"></script>
+<!-- <script src="{{ url_for('poap_static', path='js/geohash.js') }}"></script> -->
 <script src="{{ url_for('poap_static', path='js/utils.js') }}"></script>
 <script src="{{ url_for('poap_static', path='components/key-pair/key-pair.js') }}"></script>
 <script src="{{ url_for('poap_static', path='components/issuer-details/issuer-details.js') }}"></script>

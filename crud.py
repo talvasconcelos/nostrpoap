@@ -83,8 +83,9 @@ async def create_poap(issuer_id: str, data: CreatePOAP) -> POAP:
     badge_id = data.id or uuid.uuid4().hex
     await db.execute(
         """
-        INSERT INTO poap.badges (id, issuer_id, name, description, image, thumbs, event_id, event_created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO poap.badges (id, issuer_id, name, description, image, thumbs, event_id, event_created_at, geohash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO NOTHING
         """,
         (
             badge_id,
@@ -95,6 +96,7 @@ async def create_poap(issuer_id: str, data: CreatePOAP) -> POAP:
             data.thumbs,
             data.event_id,
             data.event_created_at,
+            data.geohash,
         ),
     )
     poap = await get_poap(badge_id)
@@ -117,7 +119,7 @@ async def get_poaps(issuer_id: str) -> List[POAP]:
 async def update_poap(issuer_id: str, data: POAP) -> Optional[POAP]:
     await db.execute(
         """
-        UPDATE poap.badges SET name = ?, description = ?, image = ?, thumbs = ?, event_id = ?, event_created_at = ?
+        UPDATE poap.badges SET name = ?, description = ?, image = ?, thumbs = ?, event_id = ?, event_created_at = ?, geohash = ?
         WHERE issuer_id = ? AND id = ?
         """,
         (
@@ -127,6 +129,7 @@ async def update_poap(issuer_id: str, data: POAP) -> Optional[POAP]:
             data.thumbs,
             data.event_id,
             data.event_created_at,
+            data.geohash,
             issuer_id,
             data.id,
         ),
@@ -163,6 +166,7 @@ async def create_award_poap(issuer_id: str, data: CreateAward) -> Award:
         """
         INSERT INTO poap.awards (id, badge_id, issuer, claim_pubkey, event_id, event_created_at)
         VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO NOTHING
         """,
         (
             award_id,
