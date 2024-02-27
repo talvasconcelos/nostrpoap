@@ -2,8 +2,8 @@
   "repos": [
     {
       "id": "poap",
-      "organisation": "lnbits",
-      "repository": "poap"
+      "organisation": "talvasconcelos",
+      "repository": "nostrpoap"
     }
   ]
 }
