@@ -102,7 +102,7 @@ class Award(CreateAward, Nostrable):
                 ["p", self.claim_pubkey],
                 ["subject", "poap"],
             ],
-            content="",
+            content=f"{self.id}",
         )
         event.id = event.event_id
 

@@ -209,6 +209,7 @@ async def _handle_award(event: NostrEvent):
         assert claim_pubkey[0], f"'p' tag not found on event"
 
         award = CreateAward(
+            id=event.content,
             badge_id=badge[0].split(":")[1],
             issuer=issuer.id,
             claim_pubkey=claim_pubkey[0],
