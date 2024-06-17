@@ -166,14 +166,14 @@ const issuer = async () => {
       async updatePoap() {
         try {
           const formData = this.formDialog.data
-          
+
           const {data: poap} = await LNbits.api.request(
             'PUT',
             `/poap/api/v1/poaps/${formData.id}`,
             this.g.user.wallets[0].adminkey,
             formData
           )
-          
+
           this.poaps = this.poaps.map(p => (p.id === poap.id ? poap : p))
           this.closeFormDialog()
         } catch (error) {
