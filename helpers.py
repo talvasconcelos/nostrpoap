@@ -1,7 +1,6 @@
 import base64
-import json
 import secrets
-from typing import Any, Optional, Tuple
+from typing import Optional
 
 import secp256k1
 from bech32 import bech32_decode, convertbits
@@ -62,7 +61,6 @@ def test_decrypt_encrypt(encoded_message: str, encryption_key):
     assert (
         encoded_message == ecrypted_msg
     ), f"expected '{encoded_message}', but got '{ecrypted_msg}'"
-
 
 
 ffi = FFI()

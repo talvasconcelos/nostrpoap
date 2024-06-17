@@ -1,35 +1,27 @@
 import asyncio
 import json
-from math import dist
-from typing import List, Optional, Tuple
-from webbrowser import get
 
 from loguru import logger
 
-from lnbits.bolt11 import decode
-from lnbits.core.services import websocketUpdater, create_invoice, get_wallet
-from .geohash.distances import geohash_approximate_distance, geohash_haversine_distance
-from .geohash.geohash import gh_encode
-
 from . import nostr_client
-
 from .crud import (
-    get_issuers_ids_with_pubkeys,
-    get_issuer_by_pubkey,
-    create_poap,
+    check_awarded_to_pubkey,
     create_award_poap,
-    get_poaps,
-    get_poap,
+    create_poap,
     get_awards,
+    get_issuer_by_pubkey,
+    get_issuers_ids_with_pubkeys,
     get_last_award_update_time,
     get_last_poap_update_time,
-    update_poap,
+    get_poap,
+    get_poaps,
     update_award,
-    check_awarded_to_pubkey,
+    update_poap,
 )
-
+from .geohash.distances import geohash_approximate_distance, geohash_haversine_distance
+from .geohash.geohash import gh_encode
+from .models import POAP, CreateAward, Issuer, Nostrable
 from .nostr.event import NostrEvent
-from .models import Nostrable, Issuer, POAP, CreateAward
 
 
 async def update_issuer_to_nostr(issuer: Issuer, delete_issuer=False) -> Issuer:
